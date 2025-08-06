@@ -1,21 +1,21 @@
 services:
-    db:
-        image: postgres:15-alpine
-        container_name: gitea_postgres
-        restart: always
-        environment:
-            POSTGRES_USER: gitea
-            POSTGRES_PASSWORD: gitea
-            POSTGRES_DB: gitea
-        volumes:
-            - postgres_data:/var/lib/postgresql/data
-        networks:
-            - gitea_network
-        healthcheck:
-            test: ["CMD-SHELL", "pg_isready -U gitea"]
-            interval: 10s
-            timeout: 5s
-            retries: 5
+  db:
+    image: postgres:15-alpine
+    container_name: gitea_postgres
+    restart: always
+    environment:
+      POSTGRES_USER: gitea
+      POSTGRES_PASSWORD: gitea
+      POSTGRES_DB: gitea
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - gitea_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U gitea"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
     test-db:
         image: postgres:15-alpine
@@ -33,65 +33,66 @@ services:
             timeout: 5s
             retries: 5
 
-    gitea:
-        image: gitea/gitea
-        container_name: gitea
-        depends_on:
-            db:
-                condition: service_healthy
-        restart: always
-        environment:
-            # Gitea User IDs (important for file permissions)
-            - USER_UID=1000
-            - USER_GID=1000
+  gitea:
+    image: gitea/gitea
+    container_name: gitea
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: always
+    environment:
+      # Gitea User IDs (important for file permissions)
+      - USER_UID=1000
+      - USER_GID=1000
 
-            # Database config
-            - GITEA__database__DB_TYPE=postgres
-            - GITEA__database__HOST=db:5432
-            - GITEA__database__NAME=change
-            - GITEA__database__USER=change
-            - GITEA__database__PASSWD=change
-            - GITEA__database__SSL_MODE=disable
+      # Database config
+      - GITEA__database__DB_TYPE=postgres
+      - GITEA__database__HOST=db:5432
+      - GITEA__database__NAME=gitea
+      - GITEA__database__USER=gitea
+      - GITEA__database__PASSWD=gitea
+      - GITEA__database__SSL_MODE=disable
 
-            # Server settings
-            - GITEA__server__ROOT_URL=https://git.ifkafin.com
-            - GITEA__server__HTTP_PORT=3000
-            - GITEA__server__HTTP_ADDR=0.0.0.0
-            - GITEA__server__SSH_PORT=22
-            - GITEA__server__DOMAIN=git.ifkafin.com
+      # Server settings
+      - GITEA__server__ROOT_URL=https://git.ifkafin.com
+      - GITEA__server__HTTP_PORT=3000
+      - GITEA__server__HTTP_ADDR=0.0.0.0
+      - GITEA__server__SSH_PORT=22
+      - GITEA__server__DOMAIN=git.ifkafin.com
 
-            # Optional: Gitea Actions (CI/CD)
-            - GITEA__actions__ENABLED=true
+      # Optional: Gitea Actions (CI/CD)
+      - GITEA__actions__ENABLED=true
 
-        volumes:
-            - gitea_data:/data
-            - /etc/localtime:/etc/localtime:ro
-            - /etc/timezone:/etc/timezone:ro
-        ports:
-            - "3099:3000" # HTTP
-            - "2299:22" # SSH
-        networks:
-            - gitea_network
+    volumes:
+      - gitea_data:/data
+      - /etc/localtime:/etc/localtime:ro
+      - /etc/timezone:/etc/timezone:ro
+    ports:
+      - "3099:3000"  # HTTP
+      - "2299:22"    # SSH
+    networks:
+      - gitea_network
 
-    runner:
-        image: docker.io/gitea/act_runner:nightly
-        container_name: gitea_runner
-        restart: always
-        depends_on:
-            - gitea
-        networks:
-            - gitea_network
-        environment:
-            GITEA_INSTANCE_URL: http://gitea:3000
-            GITEA_RUNNER_REGISTRATION_TOKEN: "${GITEA_RUNNER_REGISTRATION_TOKEN}"
-            GITEA_RUNNER_NAME: hermes
-        volumes:
-            - ./config.yaml:/config.yaml
-            - ./data:/data
-            - /var/run/docker.sock:/var/run/docker.sock
+  runner:
+    image: docker.io/gitea/act_runner:nightly
+    container_name: gitea_runner
+    restart: always
+    depends_on:
+      - gitea
+    networks:
+      - gitea_network
+    environment:
+      GITEA_INSTANCE_URL: https://git.ifkafin.com
+      GITEA_RUNNER_REGISTRATION_TOKEN: "${GITEA_RUNNER_REGISTRATION_TOKEN}"
+      GITEA_RUNNER_NAME: hermes
+    volumes:
+      - ./config.yaml:/config.yaml
+      - ./data:/data
+      - /var/run/docker.sock:/var/run/docker.sock
 
 volumes:
-    gitea_data:
-    postgres_data:
+  gitea_data:
+  postgres_data:
+
 networks:
-    gitea_network:
+  gitea_network:
