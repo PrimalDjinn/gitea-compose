@@ -17,22 +17,6 @@ services:
       timeout: 5s
       retries: 5
 
-    test-db:
-        image: postgres:15-alpine
-        container_name: gitea_test_postgres
-        restart: always
-        environment:
-            POSTGRES_USER: test
-            POSTGRES_PASSWORD: test
-            POSTGRES_DB: test
-        networks:
-            - gitea_network
-        healthcheck:
-            test: ["CMD-SHELL", "pg_isready -U gitea"]
-            interval: 10s
-            timeout: 5s
-            retries: 5
-
   gitea:
     image: gitea/gitea
     container_name: gitea
